@@ -280,7 +280,7 @@ class ilRESTInitialisation extends ilInitialisation {
         $ilBench->stop("Core", "HeaderInclude_Authentication");
 
         // workaround: force login
-        if ((isset($_GET["cmd"]) && $_GET["cmd"] == "force_login") || $this->script == "login.php")
+        if ((!empty($_GET["cmd"]) && $_GET["cmd"] == "force_login") || $this->script == "login.php")
         {
             $ilAuth->logout();
             if(!isset($_GET['forceShoppingCartRedirect']))

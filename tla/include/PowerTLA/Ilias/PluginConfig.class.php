@@ -43,7 +43,7 @@ class PluginConfig extends PluginBase
     {
         global $ilClientIniFile;
 
-        if (!isset($this->lang))
+        if (empty($this->lang))
         {
             $this->lang = $ilClientIniFile->readVariable('language',
                                                          'default');

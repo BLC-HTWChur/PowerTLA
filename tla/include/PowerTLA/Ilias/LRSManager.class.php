@@ -46,7 +46,7 @@ class LRSManager extends LRSBase
         if (array_key_exists("mbox", $actor))
         {
             $email = array_pop(explode(":", $actor["mbox"]));
-            if (isset($email) && !empty($email))
+            if (!empty($email))
             {
                 $r = $this->db->queryF("SELECT usr_id FROM usr_data ".
                                    "WHERE email = %s",
@@ -96,7 +96,7 @@ class LRSManager extends LRSBase
     protected function findStatementByUUID($uuid)
     {
         $this->mark();
-        if (isset($uuid) && !empty($uuid))
+        if (!empty($uuid))
         {
             $r = $this->db->queryF("SELECT statement FROM pwrtla_xapistatements WHERE uuid = %s",
                                    array("text"),
@@ -130,7 +130,7 @@ class LRSManager extends LRSBase
     {
         $this->mark();
         $where = $this->buildWhere($aOptions);
-        if (isset($aLRSStatement) && isset($where) && !empty($where))
+        if (isset($aLRSStatement) && !empty($where))
         {
             $dbtypes = array();
             $dbvals  = array();
@@ -155,8 +155,7 @@ class LRSManager extends LRSBase
     {
         $this->mark();
         $statement = $this->findStatementByUUID($uuid);
-        if (isset($vuuid) &&
-            !empty($vuuid) &&
+        if (!empty($vuuid) &&
             isset($statement))
         {
             $uuid   = $this->quote($uuid);
@@ -223,7 +222,7 @@ class LRSManager extends LRSBase
      */
     protected function findDocumentByUUID($uuid)
     {
-        if (isset($uuid) && !empty($uuid))
+        if (!empty($uuid))
         {
             $r = $this->db->queryF("SELECT statement FROM pwrtla_xapidocuments WHERE uuid = %s",
                                    array(self::$types["uuid"]),
@@ -279,7 +278,7 @@ class LRSManager extends LRSBase
     {
         $dbDoc = $this->quote(json_encode($aDocument));
         $where = $this->buildWhere($aOptions);
-        if (!isset($where) && !empty($where))
+        if (!empty($where))
         {
             $sql = "UPDATE TABLE pwrtla_xapidocument SET document = " . $dbDoc . " WHERE ";
             $sql .= $where;
@@ -290,7 +289,7 @@ class LRSManager extends LRSBase
     protected function deleteDocument($aOptions)
     {
         $where = $this->buildWhere($aOptions);
-        if (!isset($where) && !empty($where))
+        if (!empty($where))
         {
             $sql = "DELETE FROM pwrtla_xapidocument WHERE " . $where;
             $this->db->manipulateF($sql, array(), array());

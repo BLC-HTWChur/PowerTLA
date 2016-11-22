@@ -228,7 +228,7 @@ class CourseBroker extends \RESTling\Logger
                 break;
         }
 
-        if (isset($type) &&
+        if (!empty($type) &&
             !array_search($type, $ctList))
         {
             array_push($ctList, $type);

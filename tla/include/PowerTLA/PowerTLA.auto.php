@@ -19,7 +19,7 @@
     foreach ( $prefixes as $p )
     {
         //    error_log($p);
-        if (file_exists($p .'/PowerTLA.auto.php' ))
+        if (file_exists($p .DIRECTORY_SEPARATOR.'PowerTLA.auto.php' ))
         {
             $powertlapath = $p;
             break;
@@ -28,34 +28,37 @@
     // error_log("auto: " . $powertlapath);
 
     spl_autoload_register(function ($class) {
+        $class = ltrim($class, '\\');
 
-        error_log("powertla-auto: " . $class);
-
-        $class = ltrim($class, "\\");
         $parts = explode('\\', $class);
 
-        $NSRoot = array_shift($parts);
+        $root = array_shift($parts);
 
-        // error_log("powertla-auto: " . $NSRoot);
+        if (!empty($root)) {
+            $cpath = array();
+            // direct namespace
+            $cpath[] = $root .DIRECTORY_SEPARATOR. implode(DIRECTORY_SEPARATOR, $parts) . ".class.php";
 
-        if (isset($NSRoot) &&
-            !empty($NSRoot)) {
-            if($NSRoot == "PowerTLA") {
+            // sub-directory namespaces
+            $cpath[] = $root .DIRECTORY_SEPARATOR. "classes" .DIRECTORY_SEPARATOR. implode(DIRECTORY_SEPARATOR, $parts) . ".class.php";
+            $cpath[] = $root .DIRECTORY_SEPARATOR. "src" .DIRECTORY_SEPARATOR. implode(DIRECTORY_SEPARATOR, $parts) . ".class.php";
+            $cpath[] = $root .DIRECTORY_SEPARATOR. "lib" .DIRECTORY_SEPARATOR. implode(DIRECTORY_SEPARATOR, $parts) . ".class.php";
 
-//                error_log("powertla-auto: " . $class);
+            // for developer prefixed namespaces
+            $root = array_shift($parts);
+            $cpath[] = strtolower($root) .DIRECTORY_SEPARATOR. "src" .DIRECTORY_SEPARATOR. implode(DIRECTORY_SEPARATOR, $parts) . ".class.php";
+            $cpath[] = strtolower($root) .DIRECTORY_SEPARATOR. "lib" .DIRECTORY_SEPARATOR. implode(DIRECTORY_SEPARATOR, $parts) . ".class.php";
 
-                global $powertlapath;
-                $path = $powertlapath . '/' . implode('/', $parts) . '.class.php';
+            $prefixes = explode(PATH_SEPARATOR, get_include_path());
 
-//                error_log("auto: " . $path);
-
-                if (file_exists($path))
-                {
-                    include_once $path;
-//                    error_log("auto ok! " );
+            foreach ( $prefixes as $p ) {
+                foreach ($cpath as $path) {
+                    if (file_exists($p . DIRECTORY_SEPARATOR . $path)) {
+                        include_once $p . DIRECTORY_SEPARATOR . $path;
+                        break 2;
+                    }
                 }
             }
-            // TODO: Provide a mechanism for VLE plugins
         }
 
     });

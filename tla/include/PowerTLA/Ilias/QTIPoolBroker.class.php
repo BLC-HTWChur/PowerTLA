@@ -191,7 +191,7 @@ class QTIPoolBroker extends \RESTling\Logger
 
         $questions = $questionPool->getQuestionList();
 
-        if (!isset($questions) || empty($questions))
+        if (empty($questions))
         {
             // ignore empty question pools
             return $retval;

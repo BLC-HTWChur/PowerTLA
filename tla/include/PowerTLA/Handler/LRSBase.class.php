@@ -297,7 +297,7 @@ abstract class LRSBase extends BaseHandler
                         $id = $jV["account"]["homepage"];
                     }
 
-                    if (isset($id) && !empty($id))
+                    if (!empty($id))
                     {
                         $lrsOpts["agent"] = $value;
                         $lrsOpts["agent_id"] = $id;
@@ -360,11 +360,11 @@ abstract class LRSBase extends BaseHandler
      */
     public function handleStatement($statement)
     {
-        if (isset($statement) &&
-            gettype($statement) == "array")
+        if (!empty($statement) &&
+            is_array($statement))
         {
             $uuid = $statement["id"];
-            if (!isset($uuid))
+            if (!empty($uuid))
             {
                 $uuid = $this->generateUUID();
                 $statement["id"] = $uuid;
@@ -377,13 +377,13 @@ abstract class LRSBase extends BaseHandler
                 {
                     $actorid = $statement["actor"]["mbox"];
                 }
-                if (!isset($actorid) || empty($actorid))
+                if (empty($actorid))
                 {
                     if (array_key_exists("openid", $statement["actor"]))
                     {
                         $actorid = $statement["actor"]["openid"];
                     }
-                    if ((!isset($actorid) || empty($actorid)) &&
+                    if (empty($actorid) &&
                         array_key_exists("account", $statement["actor"]) &&
                         array_key_exists("homepage",
                                          $statement["actor"]["account"]))
@@ -473,7 +473,7 @@ abstract class LRSBase extends BaseHandler
     public function processStatementStream($aStream)
     {
         $retval = array();
-        if (isset($aStream) && gettype($aStream) == "array")
+        if (!empty($aStream) && is_array($aStream))
         {
             $retval = array();
             foreach ($aStream as $st)
@@ -528,7 +528,7 @@ abstract class LRSBase extends BaseHandler
     public function extendStatement($statement)
     {
         $uuid = $statement["uuid"];
-        if (isset($uuid) && !empty($uuid))
+        if (!empty($uuid))
         {
             $origStatement = $this->findStatementByUUID($uuid);
             if (isset($origStatement) &&

@@ -88,9 +88,8 @@ class IdentityProvider extends IDPBase
 
         if ($ilUser->getId() &&
             $ilUser->getLogin() != "anonymous" &&
-            !isset($this->guestuser) ||
-            (!empty($this->guestuser) &&
-            $ilUser->getLogin() != $this->guestuser))
+            !empty($this->guestuser) &&
+            $ilUser->getLogin() != $this->guestuser)
         {
             return FALSE;
         }
@@ -162,7 +161,6 @@ class IdentityProvider extends IDPBase
         $retval = null;
         if ($ilUser->getId() &&
             $ilUser->getLogin() != "anonymous" &&
-            isset($this->guestuser) &&
             !empty($this->guestuser) &&
             $ilUser->getLogin() != $this->guestuser)
         {
@@ -194,7 +192,6 @@ class IdentityProvider extends IDPBase
         $retval = null;
         if ($ilUser->getId() &&
             $ilUser->getLogin() != "anonymous" &&
-            isset($this->guestuser) &&
             !empty($this->guestuser) &&
             $ilUser->getLogin() != $this->guestuser)
         {
@@ -325,8 +322,7 @@ class IdentityProvider extends IDPBase
 
     protected function loadTokenUser($idtoken)
     {
-        if (isset($idtoken) &&
-            !empty($idtoken))
+        if (!empty($idtoken))
         {
             return $this->loadTokenData(array("token" => $idtoken));
         }

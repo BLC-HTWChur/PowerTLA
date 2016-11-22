@@ -45,7 +45,14 @@ class BaseService extends \RESTling\Service {
         $this->VLE = new $systemClass();
         $this->VLE->setGuestUser($this->config["PowerTLA"]["TLA_GUESTUSER"]);
 
+        // any of the two has to yield true
         $validator = $this->VLE->getSessionValidator();
+        if (isset($validator))
+        {
+            $this->addHeaderValidator($validator);
+        }
+
+        $validator = $this->VLE->getTokenValidator();
         if (isset($validator))
         {
             $this->addHeaderValidator($validator);

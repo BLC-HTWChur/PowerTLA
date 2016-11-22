@@ -12,24 +12,24 @@ class File extends BaseHandler
         $optionList = array("owner", "filename", "path");
         $opt = array();
 
-        if (isset($options) && !empty($options)) {
+        if (!empty($options)) {
             foreach ($options as $k => $v) {
                 $opt[$k] = $v;
             }
         }
-        
+
         // get owner context
-        if (isset($opt["owner"]) && !empty($opt["owner"]))
+        if (!empty($opt["owner"]))
         {
         	$this->ownercontext = \context_user::instance($opt["owner"]);
         }
-        
+
         // add path slashes
-        if (isset($opt["owner"]) && !empty($opt["owner"]))
+        if (!empty($opt["owner"]))
         {
         	$opt['path'] = '/' . $opt['path'] . '/';
         }
-                        
+
         $this->file = $opt;
     }
 
@@ -56,10 +56,10 @@ class File extends BaseHandler
     	}
 		\send_stored_file($this->fileref);
     }
-    
+
     private function getFile(){
     	$fs = \get_file_storage();
-    	
+
     	return $fs->get_file($this->ownercontext->id, 'user', 'private', 0, $this->file['path'], $this->file['filename']);
     }
 }

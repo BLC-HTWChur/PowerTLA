@@ -47,7 +47,7 @@ class Xapi extends BaseService
             $agent    = $this->queryParam["agent"];
         }
 
-        if (isset($agent) && !empty($agent))
+        if (!empty($agent))
         {
             try
             {

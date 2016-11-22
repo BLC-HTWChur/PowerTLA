@@ -56,7 +56,7 @@ abstract class VLE extends \RESTling\Logger
      */
     public function validateAgent($agent)
     {
-        if(isset($agent) && gettype($agent) == "array")
+        if(!empty($agent) && is_array($agent))
         {
             $idp = $this->getIdentityProvider();
 
@@ -103,7 +103,7 @@ abstract class VLE extends \RESTling\Logger
 
     public function setGuestUser($username)
     {
-        if (isset($username) && !empty($username))
+        if (!empty($username))
         {
             $this->guestuserid = $username;
         }
@@ -215,21 +215,41 @@ abstract class VLE extends \RESTling\Logger
         if (!property_exists($this->handler, "validator"))
         {
             $validatorClass = "PowerTLA\\" . $this->lmstype . "\\Validator\\Session";
-            $this->handler->validator = new $validatorClass($this);
+
+            if (class_exists($validatorClass, true)) {
+                $this->handler->validator = new $validatorClass($this);
+            }
         }
 
-        return $this->handler->validator;
+        if (property_exists($this->handler, "validator")) {
+            return $this->handler->validator;
+        }
+        return null;
+    }
+
+    public function getTokenValidator()
+    {
+        if (!property_exists($this->handler, "token_validator"))
+        {
+            $validatorClass = "PowerTLA\\" . $this->lmstype . "\\Validator\\Token";
+            if (class_exists($validatorClass, true)) {
+                $this->handler->token_validator = new $validatorClass($this);
+            }
+        }
+
+        if (property_exists($this->handler, "token_validator")) {
+            return $this->handler->token_validator;
+        }
+        return null;
     }
 
     final public function getHandler($name, $component="") {
-        if (isset($name) &&
-            !empty($name) &&
+        if (!empty($name) &&
             is_string($name)) {
 
             $pname = $name = ucfirst(strtolower($name));
 
-            if (isset($component) &&
-                !empty($component)) {
+            if (!empty($component)) {
 
                 $pname = $name . "_". $component;
             }
@@ -238,11 +258,17 @@ abstract class VLE extends \RESTling\Logger
 
                 $handlerClass = "\\PowerTLA\\" . $this->lmstype . "\\Handler\\" . (!empty($component) ? "$component\\" : "") . $name;
 
-//                $this->log("load handler for $pname class " .$handlerClass );
-                $this->handler->$pname = new $handlerClass($this);
+                // $this->log("load handler for $pname class " .$handlerClass );
+                if (class_exists($handlerClass, true)) {
+                    $this->handler->$pname = new $handlerClass($this);
+                }
             }
 
-            return $this->handler->$pname;
+            // be 100% certain that the property now exists
+            // (may not becaue the class is missing)
+            if (property_exists($this->handler, $pname)) {
+                return $this->handler->$pname;
+            }
         }
         return null;
     }

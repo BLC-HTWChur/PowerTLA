@@ -26,8 +26,7 @@ class Xapi extends LRSBase
         if (array_key_exists("mbox", $actor))
         {
             $email = array_pop(explode(":", $actor["mbox"]));
-            if (isset($email) &&
-                !empty($email))
+            if (!empty($email))
             {
                 // get user id from the user table
                 if ($user = $this->db->get_record('user',
@@ -49,8 +48,7 @@ class Xapi extends LRSBase
         }
 
 
-        if (isset($itoken) &&
-            !empty($itoken))
+        if (!empty($itoken))
         {
             if ($utoken = $this->db->get_record("pwrtla_usertokens",
                                              array("user_token" => $itoken)))
@@ -78,7 +76,7 @@ class Xapi extends LRSBase
     protected function findStatementByUUID($uuid)
     {
         $statement = null;
-        if(isset($uuid) && !empty($uuid))
+        if(!empty($uuid))
         {
             if ($rec = $this->db->get_record("pwrtla_xapistatements",
                                          array("uuid" => $uuid)))
@@ -91,7 +89,7 @@ class Xapi extends LRSBase
     protected function findDocumentByUUID($uuid)
     {
         $document = null;
-        if(isset($uuid) && !empty($uuid))
+        if(!empty($uuid))
         {
             if ($rec = $this->db->get_record("pwrtla_xapidocuments",
                                          array("uuid" => $uuid)))
@@ -115,7 +113,7 @@ class Xapi extends LRSBase
         // note: moodle sumbles upon question mark
         $aStream = array();
         $where = $this->buildWhere($aOptions);
-        if (isset($where) && !empty($where))
+        if (!empty($where))
         {
             $records = $this->db->get_records("pwrtla_xapistatements",
                                                      $aOptions);
@@ -136,7 +134,7 @@ class Xapi extends LRSBase
         }
         $aStream = array();
         $where = $this->buildWhere($aOptions);
-        if (isset($where) && !empty($where))
+        if (!empty($where))
         {
             $records = $this->db->get_records("pwrtla_xapidocuments",
                                               $aOptions);
@@ -156,7 +154,7 @@ class Xapi extends LRSBase
             unset($aOptions["agent"]);
         }
         $where = $this->buildWhere($aOptions);
-        if (isset($where) && !empty($where))
+        if (!empty($where))
         {
             $records = $this->db->get_records("pwrtla_xapistatements",
                                                      $aOptions);
@@ -175,7 +173,7 @@ class Xapi extends LRSBase
             unset($aOptions["agent"]);
         }
         $where = $this->buildWhere($aOptions);
-        if (isset($where) && !empty($where))
+        if (!empty($where))
         {
             $records = $this->db->get_records("pwrtla_xapidocuments",
                                                      $aOptions);
@@ -206,7 +204,6 @@ class Xapi extends LRSBase
         }
         $where = $this->buildWhere($aOptions);
         if (isset($aStatement) &&
-            !isset($where) &&
             !empty($where))
         {
             $strDoc = json_encode($aStatement);
@@ -252,7 +249,6 @@ class Xapi extends LRSBase
         }
         $where = $this->buildWhere($aOptions);
         if (isset($aDocument) &&
-            !isset($where) &&
             !empty($where))
         {
             $strDoc = json_encode($aDocument);
@@ -278,8 +274,7 @@ class Xapi extends LRSBase
     protected function voidStatement($uuid, $vuuid)
     {
         $statement = $this->findStatementByUUID($uuid);
-        if (isset($vuuid) &&
-            !empty($vuuid) &&
+        if (!empty($vuuid) &&
             isset($statement))
         {
             $uuid   = $this->quote($uuid);

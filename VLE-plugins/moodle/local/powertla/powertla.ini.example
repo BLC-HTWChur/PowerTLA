@@ -11,8 +11,3 @@ TLA_TIMEZONE = "Europe/Zurich"
 ; TLA_TOKENTYPE = "Bearer"
 TLA_TOKENTYPE = "MAC"
 TLA_ICON = "/icon.png"
-
-[RESTling]
-
-; include_path=/path/to/your/restling/instance
-include_path = "../../PowerTLA/tla/include"

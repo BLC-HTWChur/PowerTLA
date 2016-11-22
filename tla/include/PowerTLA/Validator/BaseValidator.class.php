@@ -72,7 +72,7 @@ abstract class BaseValidator extends \RESTling\Validator
 
     public function setToken($token)
     {
-        if (isset($token) && !empty($token))
+        if (!empty($token))
         {
             $this->token = $token;
         }
@@ -80,7 +80,7 @@ abstract class BaseValidator extends \RESTling\Validator
 
     public function setTokenType($tokenType)
     {
-        if (isset($tokenType) && !empty($tokenType))
+        if (!empty($tokenType))
         {
             $this->tokenType = $tokenType;
         }
@@ -88,7 +88,7 @@ abstract class BaseValidator extends \RESTling\Validator
 
     public function validate()
     {
-        if (isset($this->token) &&
+        if (!empty($this->token) &&
             $this->validateToken())
         {
             return TRUE;

@@ -29,8 +29,10 @@ $TLAConfig = parse_ini_file("powertla.ini", true);
 
 // set the include paths so we can host the common include files outside the LMS folder
 set_include_path($TLAConfig["PowerTLA"]["include_path"] . PATH_SEPARATOR .
-                 $TLAConfig["RESTling"]["include_path"] . PATH_SEPARATOR .
+                 $TLAConfig["PowerTLA"]["system_path"] .  PATH_SEPARATOR .
                  get_include_path());
+
+//we should include the moodle root path into the include files
 
 chdir($TLAConfig["PowerTLA"]["system_path"]);
 
@@ -41,8 +43,8 @@ date_default_timezone_set($TLAConfig["PowerTLA"]["TLA_TIMEZONE"]);
 define("TLA_TOKENTYPE", $TLAConfig["PowerTLA"]["TLA_TOKENTYPE"]);
 
 // Init Autoloaders for RESTling and PowerTLA Classes
-include_once('RESTling/contrib/Restling.auto.php');
-include_once('PowerTLA.auto.php');
+//include_once('RESTling/contrib/Restling.auto.php');
+include_once('PowerTLA/PowerTLA.auto.php');
 
 /** *****************************************************************
  * Part 2: Service Discovery
@@ -82,11 +84,17 @@ if(array_key_exists("PATH_INFO", $_SERVER) &&
         isset($serviceName) &&
         !empty($serviceName)) {
 
-        $serviceName  = ucfirst(strtolower($serviceName));
+        $aSN = explode("-", strtolower($serviceName));
+
+        $serviceName = "";
+        foreach ($aSN as $sn) {
+            $serviceName  .= ucfirst($sn);
+        }
+
         // $serviceName .= "Service";
 
         // preload the service class
-        $serviceName = "PowerTLA\\Service\\".$typemap[$serviceType]."\\$serviceName";
+        $phpServiceName = "PowerTLA\\Service\\".$typemap[$serviceType]."\\$serviceName";
     }
 }
 
@@ -98,19 +106,14 @@ if(array_key_exists("PATH_INFO", $_SERVER) &&
  * Note: if something goes seriously wrong until this point we will launch our
  * Error Service.
  */
-if (!isset($serviceName)&& empty($serviceName)) {
+if (empty($phpServiceName)) {
     $service = new PowerTLA\Service\ErrorService("invalid call", "Missing Service");
 }
+else if (class_exists($phpServiceName, true)) {
+    $service = new $phpServiceName($TLAConfig);
+}
 else {
-    // error_log($serviceName);
-
-    // try to instantiate the service class
-    try {
-        $service = new $serviceName($TLAConfig);
-    }
-    catch(Exception $e) {
-        $service = new PowerTLA\Service\ErrorService("instantiation", $e->getMessage());
-    }
+    $service = new PowerTLA\Service\ErrorService("instantiation", "service $serviceType/$serviceName does not exist ($phpServiceName)");
 }
 // run the service
 $service->run();

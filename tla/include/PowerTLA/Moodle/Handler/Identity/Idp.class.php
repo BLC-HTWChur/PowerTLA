@@ -116,8 +116,7 @@ class Idp extends IDPBase
     {
         global $DB;
         // Ilias has no homepage profile
-        if (isset($homepage) &&
-            !empty($homepage))
+        if (!empty($homepage))
         {
             if ($user = $DB->get_record("user",
                                         array("url" => $homepage)))
@@ -147,8 +146,7 @@ class Idp extends IDPBase
 
     protected function loadTokenUser($idtoken)
     {
-        if (isset($idtoken) &&
-            !empty($idtoken))
+        if (!empty($idtoken))
         {
             return $this->loadTokenData(array("user_token" => $idtoken));
         }

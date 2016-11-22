@@ -63,17 +63,24 @@
             dir   = glob.document.location.pathname;
         }
 
-        function tryRSDPath() {
+        function tryRSDPath(path) {
             if (jq && jq.ajax) {
+                var purl = host + path;
+                if (path.indexOf("https://") == 0 ||
+                    path.indexOf("http://") == 0 ||
+                    path.indexOf("//") == 0) {
+                    purl = path;
+                }
+
                 jq.ajax({
                     type: "GET",
                     dataType: "json",
-                    url: host + (dir === "/"? "": dir) + "/tla/rsd.php",
+                    url: purl,
                     success: function (data) {
                         rsd = data;
                         apis = {};
-                        rsd.apis.forEach(function (api) {
-                            apis[api.name] = api.link;
+                        Object.keys(rsd.apis).forEach(function (api) {
+                            apis[api] = rsd.apis[api].apiLink;
                         });
                         cbFunc.call(bind, rsd);
                     },
@@ -91,8 +98,43 @@
             }
         }
 
+        function tryServicesPath() {
+            if (jq && jq.ajax) {
+                var serviceType = "application/x-rsd+json";
+                jq.ajax({
+                    type: "GET",
+                    dataType: "text",
+                    url: host + "/services.txt",
+                    success: function (data) {
+                        var lines = data.split("\n");
+                        lines.forEach(function(line) {
+                            line.trim();
+                            if (line.length) {
+                                var ass = line.split(";");
+                                ass[0] = ass[0].trim();
+                                ass[1] = ass[1].trim();
+                                if (ass[0] == serviceType) {
+                                    tryRSDPath(ass[1]);
+                                }
+                            }
+                        });
+                    },
+                    error: function (xhr, msg) {
+                        if (xhr.status === 404 && dirname !== "/") {
+                            dir = dirname(dir);
+                            tryRSDPath();
+                        }
+                        else {
+                            // call with an empty document
+                            cbFunc.call(bind, {});
+                        }
+                    }
+                });
+            }
+        }
+
         dir = dirname(dir);
-        tryRSDPath();
+        tryServicesPath();
     }
 
     /**
@@ -121,11 +163,12 @@
         if (protocol &&
             protocol.length &&
             rsd &&
-            rsd.hasOwnProperty("engine") &&
-            rsd.engine.hasOwnProperty("servicelink") &&
+            rsd.hasOwnProperty("engineName") &&
+            rsd.hasOwnProperty("homePageLink") &&
             apis.hasOwnProperty(protocol)) {
 
-            retval = rsd.engine.servicelink + apis[protocol];
+            //FIXME:: ENSURE CORRECT RSD2 behaviour
+            retval = rsd.homePageLink + apis[protocol];
 
             if (Array.isArray(pathParam)) {
                 retval += "/" + pathParam.join("/");
@@ -162,6 +205,7 @@
      */
     function init() {
         loadRSD(function() {
+            console.log("ready!");
             jq(glob.document).trigger("rsdready");
         });
     }
@@ -172,9 +216,11 @@
     function readyInit(cbReady) {
         if (typeof cbReady === "function") {
             if (rsd && rsd.engine) {
+                console.log("immediately init");
                 cbReady.call(glob.document);
             }
             else {
+                console.log("wait for rsd init");
                 jq(glob.document).bind("rsdready",
                                        cbReady);
             }

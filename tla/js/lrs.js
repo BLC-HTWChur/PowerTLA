@@ -942,7 +942,8 @@
      * internal initialization function
      */
     function init() {
-        // ensure that we catch all actions, even if the user reloads the page.
+        // ensure that we catch all actions, even if the user reloads the page
+
         jq(document).bind("unload",       cbUnload);
         jq(document).bind("beforeunload", cbUnload);
 
