@@ -18,13 +18,24 @@ class Survey extends BaseService
      */
     protected function get_analysis()
     {
-        $courseItemFilterTyp  = array_shift($this->path_info);
-        $courseItemFilter = array_shift($this->path_info);
-
+        $this->setDebugMode(true);
+        $courseModuleId  = array_shift($this->path_info);
+        $courseId = array_shift($this->path_info);
+        
         $fh = $this->VLE->getHandler("Survey", "Content");
-        $fh->setAnalyseFilter(array("courseItemFilterTyp"    => $courseItemFilterTyp,
-                                      "courseItemFilter"     => $courseItemFilter));
-        $fh->analyse();
+        $fh->setAnalyseFilter(array("courseModuleId"    => $courseModuleId,
+                                      "courseId"     => $courseId));
+
+        // analyse the data
+        try {
+            $fh->analyse();
+        }catch (Exception $e) {
+            $this->log($e->getMessage());
+            $this->not_found();
+            return;
+        }
+
+        // gets and assigns the data
         if ($fh->analyseResultExists()) {
            
             $this->data = $fh->getAnalyseResult();       
