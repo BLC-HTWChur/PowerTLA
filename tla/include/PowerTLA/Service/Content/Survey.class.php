@@ -11,14 +11,15 @@ class Survey extends BaseService
     }
 
     /**
-     * @protected @function get_analysis()
+     * @method get_analysis()
      *
      * returns the data for analysis of a feedback activity
-     *
+     * example: [{"id":"15593","typ":"multichoicerated","label":"Test","question":"","average_value":6,"range_from":"0","range_to":"8"},
+     * {"id":"15594","typ":"numeric","label":"labelnum","question":"Numeric","average_value":7,"range_from":"1","range_to":"11"}]
+     * 
      */
     protected function get_analysis()
     {
-        $this->setDebugMode(true);
         $courseModuleId  = array_shift($this->path_info);
         $courseId = array_shift($this->path_info);
         
@@ -28,6 +29,10 @@ class Survey extends BaseService
 
         // analyse the data
         try {
+            if (!$fh->checkPermission()) {
+                $this->forbidden("no permission");
+                return;
+            };
             $fh->analyse();
         }catch (Exception $e) {
             $this->log($e->getMessage());
@@ -36,8 +41,7 @@ class Survey extends BaseService
         }
 
         // gets and assigns the data
-        if ($fh->analyseResultExists()) {
-           
+        if ($fh->analyseResultExists()) {           
             $this->data = $fh->getAnalyseResult();       
         }
         else {

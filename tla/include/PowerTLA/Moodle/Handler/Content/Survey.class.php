@@ -8,9 +8,18 @@ class Survey extends BaseHandler
     private $analyseCourseId = 0;
     private $analyseResults;
 
-    // sets the parameter for filtering the analysis
+
+    /**
+     * @public @function setAnalyseFilter()
+     *
+     * sets the parameter for filtering the analysis
+     *
+     *  analyseCourseModuleId: the moodle course module
+     */
     public function setAnalyseFilter($options) {
-        $this->setDebugMode(true);
+        //$this->setDebugMode(true);
+        $this->analyseCourseModuleId=0;
+        $this->analyseCourseId=0;        
         $optionList = array("courseModuleId", "courseId");
         $opt = array();
 
@@ -33,7 +42,14 @@ class Survey extends BaseHandler
 
     }
 
-    // checks if a analyseResult exists
+
+    /**
+     * @method analyseResultExists()
+     *
+     * checks if an analyseResult exists
+     *
+     * @return bool
+     */
     public function analyseResultExists() {
 		if (!empty($this->analyseResults))
 		{
@@ -45,12 +61,40 @@ class Survey extends BaseHandler
 		}
     }
 
-    // retrieve the data from moodle
+    /**
+     * @method checkPermission()
+     *
+     * checks if the logged in user has the permission to view analysis
+     *
+     * @return bool
+     */
+    public function checkPermission() {
+        global $DB;
+
+        list($course, $cm) = \get_course_and_cm_from_cmid($this->analyseCourseModuleId, 'feedback');
+        $feedback = $DB->get_record('feedback', array('id' => $cm->instance));
+        $feedbackstructure = new \mod_feedback_structure($feedback, $cm, $this->analyseCourseId);
+
+        // Checks permission
+        return $feedbackstructure->can_view_analysis();
+    }
+
+    /**
+     * @method analyse()
+     *
+     * retrieve the data from moodle
+     * sets the data into $this->analyseResults
+     * 
+     */
     public function analyse() {
         global $DB;
 
         $this->analyseResults = null;
-        
+
+        // return if the user has no permission
+        if (!$this->checkPermission()){
+            return;
+        };
         $this->log("analyseCourseModuleId: " . $this->analyseCourseModuleId);
         $this->log("analyseCourseId: " . $this->analyseCourseId);
         list($course, $cm) = \get_course_and_cm_from_cmid($this->analyseCourseModuleId, 'feedback');
@@ -67,7 +111,8 @@ class Survey extends BaseHandler
         }
         $this->log("mygroupid: " . $mygroupid);
 
-        $feedbackstructure = new \mod_feedback_structure($feedback, $cm, $this->analyseCourseId);       
+        $feedbackstructure = new \mod_feedback_structure($feedback, $cm, $this->analyseCourseId);
+
         // Get the items of the feedback.
         $items = $feedbackstructure->get_items(true);
         $this->log("got items :" . count($items));
@@ -75,10 +120,16 @@ class Survey extends BaseHandler
         foreach ($items as $item){
 
             $ignoreempty = false;
+            $rangefrom = null;
+            $rangeto = null;
+            $result = new \stdClass();
+            $sum = 0.0;
+            $anscount = 0;
+            $quotient = 0.0;
 
-            // only multichoice, multichoicerated and numeric will be analysed
-            if (!($item->typ == "multichoice") AND !($item->typ == "multichoicerated") AND !($item->typ == "numeric")) { 
-                continue; 
+            // only multichoicerated and numeric will be analysed
+            if (!($item->typ == "multichoicerated") AND !($item->typ == "numeric")) {
+                continue;
             }else{
                 if ($this->analyseResults == null){
                     $this->analyseResults = array();
@@ -86,12 +137,13 @@ class Survey extends BaseHandler
             }
 
             $itemobj = \feedback_get_item_class($item->typ);
+
             // sets the value for ignoreempty
             if ($item->typ == "multichoice")
             {
                 $ignoreempty = (strstr($item->options, FEEDBACK_MULTICHOICE_IGNOREEMPTY));
             }
-            elseif ($item->typ == "multichoicerated"){ 
+            elseif ($item->typ == "multichoicerated"){
                 $ignoreempty = (strstr($item->options, FEEDBACK_MULTICHOICERATED_IGNOREEMPTY));
                 //extract the answers
                 $info = $itemobj->get_info($item);
@@ -101,7 +153,17 @@ class Survey extends BaseHandler
                 if (!is_array($lines)) {
                     continue;
                 }
-            } 
+                $sizeoflines = count($lines);
+                for ($i = 1; $i <= $sizeoflines; $i++) {
+                    $item_values = explode(FEEDBACK_MULTICHOICERATED_VALUE_SEP, $lines[$i-1]);
+                    $rangefrom = $rangefrom == null ? $item_values[0] : ($rangefrom > $item_values[0] ? $item_values[0] : $rangefrom );
+                    $rangeto = $rangeto == null ? $item_values[0] : ($rangeto < $item_values[0] ? $item_values[0] : $rangeto );
+                }
+            }
+            elseif($item->typ == "numeric"){
+                $ignoreempty = false;
+                list($rangefrom, $rangeto) = explode('|', $item->presentation);
+            }
 
             //get the values
             $values = \feedback_get_group_values($item, $mygroupid, $this->analyseCourseId, $ignoreempty);
@@ -111,28 +173,24 @@ class Survey extends BaseHandler
             }
             $this->log("got values:" . count($values));
 
-            $result = new \stdClass();
-            $sum = 0.0;
-            $anscount = 0;
-            $quotient = 0.0;
             foreach ($values as $value) {
                 // multichoicerated
-                // achtung Value gibt an welche antwort gewählt wurde (index beginn mit 1) und nicht den Wert den Skalawert
+                // value indicates the index of the answer and not the value o the scale
                 $this->log("value :" . $value->value);
 
-                if ($item->typ == "multichoice"){
-                    //todo
-                    null;
+                if ($item->typ == "numeric"){
+                    $sum += $value->value;
+                    $anscount++;
                 }elseif ($item->typ == "multichoicerated"){
                     $sizeoflines = count($lines);
                     for ($i = 1; $i <= $sizeoflines; $i++) {
                         $item_values = explode(FEEDBACK_MULTICHOICERATED_VALUE_SEP, $lines[$i-1]);
                         if ($value->value == $i) {
                             $sum += $item_values[0];
-                            //$anscount++;
+                            $anscount++;
                         }
                     }
-                }elseif ($item->typ == "numeric"){
+                }elseif ($item->typ == "multichoice"){
                     //todo
                     null;
                 }
@@ -143,17 +201,28 @@ class Survey extends BaseHandler
             $result->typ = $item->typ;
             $result->label = $item->label;
             $result->question = $item->name;
-            if (!empty($quotient)){
-              $result->quotient = $quotient;  
+            $result->average_value = $anscount > 0 ? doubleval($sum) /  doubleval($anscount) : null;
+            if (isset($rangefrom)){
+                $result->range_from = $rangefrom;
             }
-            $result->average_value = doubleval($sum) / doubleval(count($values));;
+            if (isset($rangeto)){
+                $result->range_to = $rangeto;
+            }
 
             array_push($this->analyseResults,$result);
         }
 
     }
 
-    // gets  the results of analyse
+
+    /**
+     * @method analyse()
+     *
+     * returns the data of analysis
+     *
+     * @return array()  the results of analyse
+     * 
+     */
     public function getAnalyseResult(){
     	return $this->analyseResults;
     }
