@@ -17,7 +17,7 @@ class Survey extends BaseHandler
      *  analyseCourseModuleId: the moodle course module
      */
     public function setAnalyseFilter($options) {
-        //$this->setDebugMode(true);
+        $this->setDebugMode(false);
         $this->analyseCourseModuleId=0;
         $this->analyseCourseId=0;        
         $optionList = array("courseModuleId", "courseId");
@@ -64,19 +64,21 @@ class Survey extends BaseHandler
     /**
      * @method checkPermission()
      *
-     * checks if the logged in user has the permission to view analysis
+     * checks if the logged in user has the permission to view analysis data
      *
      * @return bool
      */
     public function checkPermission() {
         global $DB;
 
+        
         list($course, $cm) = \get_course_and_cm_from_cmid($this->analyseCourseModuleId, 'feedback');
         $feedback = $DB->get_record('feedback', array('id' => $cm->instance));
         $feedbackstructure = new \mod_feedback_structure($feedback, $cm, $this->analyseCourseId);
-
+        
         // Checks permission
         return $feedbackstructure->can_view_analysis();
+
     }
 
     /**
