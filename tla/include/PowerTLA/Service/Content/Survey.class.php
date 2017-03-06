@@ -24,9 +24,8 @@ class Survey extends BaseService
         $courseId = array_shift($this->path_info);
         
         $fh = $this->VLE->getHandler("Survey", "Content");
-        $fh->setAnalyseFilter(array("courseModuleId"    => $courseModuleId,
+        $fh->setFilter(array("courseModuleId"    => $courseModuleId,
                                       "courseId"     => $courseId));
-
         // analyse the data
         try {
             if (!$fh->checkPermission()) {
@@ -45,6 +44,39 @@ class Survey extends BaseService
             $this->data = $fh->getAnalyseResult();       
         }
         else {
+            $this->not_found();
+        }
+    }
+
+    /**
+     * @method get_results()
+     *
+     * returns all answers of a feedback activity
+     * 
+     */
+    protected function get_results()
+    {
+        $courseModuleId  = array_shift($this->path_info);
+        $courseId = array_shift($this->path_info);
+        
+        $fh = $this->VLE->getHandler("Survey", "Content");
+        $fh->setFilter(array("courseModuleId"    => $courseModuleId,
+                                      "courseId"     => $courseId));
+        // gets the data
+        try {
+            if (!$fh->checkPermission()) {
+                $this->forbidden("no permission");
+                return;
+            };
+            $this->data = $fh->getResults();
+        }catch (Exception $e) {
+            $this->log($e->getMessage());
+            $this->not_found();
+            return;
+        }
+
+        // check if data recieved
+        if (!$this->data) {
             $this->not_found();
         }
     }
