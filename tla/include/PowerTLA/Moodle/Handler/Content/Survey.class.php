@@ -265,7 +265,7 @@ class Survey extends BaseHandler
         $feedbackstructure = new \mod_feedback_structure($feedback, $cm, $this->analyseCourseId);
 
         // Get the items of the feedback.
-        $items = $feedbackstructure->get_items(true);
+        $items = $feedbackstructure->get_items(false);
         $this->log("got items :" . count($items));
 
         foreach ($items as $item){
@@ -281,6 +281,11 @@ class Survey extends BaseHandler
 
             $reallines = [];
             $answers = [];
+
+            // pagebrack and info are no proper questionitems
+            IF ($item->typ == "pagebreak" || $item->typ == "info"){
+                continue;
+            }
 
             $itemobj = \feedback_get_item_class($item->typ);
             
@@ -307,17 +312,16 @@ class Survey extends BaseHandler
                 $lines = null;
                 $lines = explode (FEEDBACK_MULTICHOICERATED_LINE_SEP, $info->presentation);
                 
-                if (!is_array($lines)) {
-                    continue;
-                }
-                $sizeoflines = count($lines);
-                $reallines = [];
+                if (is_array($lines)) {
+                    $sizeoflines = count($lines);
+                    $reallines = [];
 
-                for ($i = 0; $i < $sizeoflines; $i++) {
-                    $item_values = explode(FEEDBACK_MULTICHOICERATED_VALUE_SEP, $lines[$i]);
-                    $rangefrom = $rangefrom == null ? $item_values[0] : ($rangefrom > $item_values[0] ? $item_values[0] : $rangefrom );
-                    $rangeto = $rangeto == null ? $item_values[0] : ($rangeto < $item_values[0] ? $item_values[0] : $rangeto );
-                    $reallines[] = $item_values;
+                    for ($i = 0; $i < $sizeoflines; $i++) {
+                        $item_values = explode(FEEDBACK_MULTICHOICERATED_VALUE_SEP, $lines[$i]);
+                        $rangefrom = $rangefrom == null ? $item_values[0] : ($rangefrom > $item_values[0] ? $item_values[0] : $rangefrom );
+                        $rangeto = $rangeto == null ? $item_values[0] : ($rangeto < $item_values[0] ? $item_values[0] : $rangeto );
+                        $reallines[] = $item_values;
+                    }
                 }
             }
             elseif($item->typ == "numeric"){
@@ -330,46 +334,45 @@ class Survey extends BaseHandler
                 $lines = null;
                 $lines = explode (FEEDBACK_MULTICHOICE_LINE_SEP, $info->presentation);
                 
-                if (!is_array($lines)) {
-                    continue;
-                }
-                $sizeoflines = count($lines);
-                $reallines = [];
+                if (is_array($lines)) {
+                    $sizeoflines = count($lines);
+                    $reallines = [];
 
-                for ($i = 0; $i < $sizeoflines; $i++) {
-                    $reallines[] = [$i+1, trim($lines[$i])];
+                    for ($i = 0; $i < $sizeoflines; $i++) {
+                        $reallines[] = [$i+1, trim($lines[$i])];
+                    }
                 }
             }
 
             //get the result values
             $values = \feedback_get_group_values($item, $mygroupid, $this->analyseCourseId, $ignoreempty);
 
-            if (!$values) {
-                continue;
-            }
-            $this->log("got values:" . count($values));
+            if ($values) {
+                $this->log("got values:" . count($values));
 
-            foreach ($values as $value) {                
-                $this->log("value :" . $value->value);
-                switch ($item->typ) {
-                    case "multichoicerated":
-                         // value indicates the index of the answer and not the value of the scale
-                         $answers[] = $reallines[$value->value - 1][0];
-                         break;
+                foreach ($values as $value) {                
+                    $this->log("value :" . $value->value);
+                    switch ($item->typ) {
+                        case "multichoicerated":
+                            // value indicates the index of the answer and not the value of the scale
+                            $answers[] = $reallines[$value->value - 1][0];
+                            break;
 
-                    case "multichoice":
-                         // split values of multipe answers into an array
-                         if ($info->subtype = 'c'){
-                            $answers[] = explode (FEEDBACK_MULTICHOICE_LINE_SEP, $value->value);
-                         }else{
+                        case "multichoice":
+                            // split values of multipe answers into an array
+                            if ($info->subtype == 'c'){
+                                $answers[] = explode (FEEDBACK_MULTICHOICE_LINE_SEP, $value->value);
+                            } else {
+                            
+                                $answers[] = $value->value;
+                            }
+                            break;
+                            
+                        default:
                             $answers[] = $value->value;
-                         }
-                         break;
-                         
-                    default:
-                        $answers[] = $value->value;
-                        break;
-                }                 
+                            break;
+                    }                 
+                }
             }
             
             $result->id = $item->id;
